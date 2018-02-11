@@ -17,7 +17,7 @@
 	along with apfs-fuse.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifdef __linux__
+#if defined(__linux__) || defined(__APPLE__)
 #include <unicode/utypes.h>
 #include <unicode/normalizer2.h>
 #else
@@ -230,7 +230,7 @@ void DumpHex(std::ostream &os, const byte_t *data, size_t size, size_t lineSize)
 
 #undef DEBUG_OUT
 
-#ifdef __linux__
+#if defined(__linux__) || defined(__APPLE__)
 
 uint32_t HashFilename(const char *utf8str, uint16_t name_len, bool case_insensitive)
 {

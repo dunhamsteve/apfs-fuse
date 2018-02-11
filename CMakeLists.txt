@@ -13,6 +13,10 @@ set(EXECUTABLE_OUTPUT_PATH ${PROJECT_BINARY_DIR}/bin)
 set(LIBRARY_OUTPUT_PATH ${PROJECT_BINARY_DIR}/lib)
 
 include_directories(.)
+if(APPLE)
+include_directories(/usr/local/opt/icu4c/include/)
+link_directories(/usr/local/opt/icu4c/lib/)
+endif()
 
 add_subdirectory(ApfsLib)
 add_subdirectory(ApfsDump)

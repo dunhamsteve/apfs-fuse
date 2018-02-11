@@ -21,11 +21,22 @@ along with apfs-fuse.  If not, see <http://www.gnu.org/licenses/>.
 #include <sys/ioctl.h>
 #include <sys/stat.h>
 #include <sys/fcntl.h>
+#if !defined(__APPLE__)
 #include <linux/fs.h>
+#endif
 #include <stdio.h>
 
 #include "DeviceLinux.h"
 #include "Global.h"
+
+#if defined(__APPLE__)
+#include <sys/disk.h>
+
+#define fstat64 fstat
+#define stat64 stat
+#define pread64 pread
+#define O_LARGEFILE 0
+#endif
 
 DeviceLinux::DeviceLinux()
 {
@@ -55,8 +66,17 @@ bool DeviceLinux::Open(const char* name)
 	}
 	else if (S_ISBLK(st.st_mode))
 	{
+#if defined(__APPLE__)
+		uint32_t block_size;
+		uint64_t block_count;
+		ioctl(m_device, DKIOCGETBLOCKSIZE, &block_size);
+		ioctl(m_device, DKIOCGETBLOCKCOUNT, &block_count);
+
+        m_size = block_count*block_size;
+#else		
 		// Hmmm ...
 		ioctl(m_device, BLKGETSIZE64, &m_size);
+#endif
 	}
 
 	if (g_debug > 0)

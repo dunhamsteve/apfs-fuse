@@ -26,7 +26,11 @@
 
 #include <sys/stat.h>
 #include <sys/types.h>
+#if defined(__APPLE__)
+#include <sys/xattr.h>
+#else
 #include <attr/xattr.h>
+#endif
 
 #include <ApfsLib/ApfsContainer.h>
 #include <ApfsLib/ApfsVolume.h>
@@ -155,14 +159,21 @@ static bool apfs_stat_internal(fuse_ino_t ino, struct stat &st)
 		// What about this?
 		// st.st_birthtime.tv_sec = rec.ino.birthtime / div_nsec;
 		// st.st_birthtime.tv_nsec = rec.ino.birthtime % div_nsec;
-
+#if defined(__APPLE__)
+		st.st_mtimespec.tv_sec = rec.ino.mtime / div_nsec;
+		st.st_mtimespec.tv_nsec = rec.ino.mtime % div_nsec;
+		st.st_ctimespec.tv_sec = rec.ino.ctime / div_nsec;
+		st.st_ctimespec.tv_nsec = rec.ino.ctime % div_nsec;
+		st.st_atimespec.tv_sec = rec.ino.atime / div_nsec;
+		st.st_atimespec.tv_nsec = rec.ino.atime % div_nsec;
+#else
 		st.st_mtim.tv_sec = rec.ino.mtime / div_nsec;
 		st.st_mtim.tv_nsec = rec.ino.mtime % div_nsec;
 		st.st_ctim.tv_sec = rec.ino.ctime / div_nsec;
 		st.st_ctim.tv_nsec = rec.ino.ctime % div_nsec;
 		st.st_atim.tv_sec = rec.ino.atime / div_nsec;
 		st.st_atim.tv_nsec = rec.ino.atime % div_nsec;
-
+#endif
 		return true;
 	}
 }
@@ -197,9 +208,15 @@ static void apfs_getattr(fuse_req_t req, fuse_ino_t ino, fuse_file_info *fi)
 	else
 		fuse_reply_err(req, ENOENT);
 }
-
+#ifdef __APPLE__
+// I'm not sure what position is here - it's not documented in the header.  Possibly for getting chunks past
+// size?
+static void apfs_getxattr(fuse_req_t req, fuse_ino_t ino, const char *name, size_t size, uint32_t position)
+{
+#else
 static void apfs_getxattr(fuse_req_t req, fuse_ino_t ino, const char *name, size_t size)
 {
+#endif
 	ApfsDir dir(*g_volume);
 	bool rc = false;
 	std::vector<uint8_t> data;
